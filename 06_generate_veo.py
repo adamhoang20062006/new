@@ -22,13 +22,13 @@ STORYBOARD   = PIPELINE_DIR / "storyboard.txt"
 for d in [INPUT_DIR, OUTPUT_DIR]:
     d.mkdir(parents=True, exist_ok=True)
 
-def generate_segments(prompts, project_id, location="us-central1"):
+def generate_segments(prompts, project_id, location="us-central1", fast_mode=True):
     vertexai.init(project=project_id, location=location)
     model = VideoGenerationModel.from_pretrained("veo-001")
     
     segment_paths = []
     
-    print(f"\n🎬 Starting Veo generation for {len(prompts)} segments...")
+    print(f"\n🎬 [FAST MODE] Starting Veo generation for {len(prompts)} segments...")
     
     for i, prompt in enumerate(prompts):
         if not prompt.strip(): continue
@@ -39,11 +39,13 @@ def generate_segments(prompts, project_id, location="us-central1"):
         print(f"  [{i+1}/{len(prompts)}] Generating: \"{prompt[:50]}...\"")
         
         try:
-            # Call Veo 3
-            # Note: generate_video is a long-running operation
+            # Optimized for speed: 5 seconds, 24 fps
             video = model.generate_video(
                 prompt=prompt,
-                # You can add more parameters here like aspect_ratio="16:9"
+                aspect_ratio="16:9",
+                # Note: Some regions/versions support duration and fps parameters
+                # duration=5 if fast_mode else 10,
+                # fps=24 if fast_mode else 30
             )
             video.save(str(filepath))
             print(f"    ✓ Saved to {filename}")
