@@ -23,6 +23,7 @@ from typing import List, Dict, Optional
 
 try:
     from google import genai
+    from google.genai.types import Tool, VertexAISearch, GenerateContentConfig
 except ImportError:
     print("❌ Run: pip install --upgrade google-genai")
     sys.exit(1)
@@ -227,8 +228,23 @@ Return ONLY valid JSON, no markdown, no explanation:
 }}
 """
 
-    print(f"🧠 Compiling story blueprint (Episode {ep_num})...")
-    response = client.models.generate_content(model=MODEL_LLM, contents=prompt)
+    print(f"🧠 Compiling story blueprint (Grounded Episode {ep_num})...")
+    
+    # Configure Grounding with your Data Store
+    project_id = os.environ.get("DEVSHELL_PROJECT_ID")
+    search_tool = Tool(
+        vertex_ai_search=VertexAISearch(
+            datastore=f"projects/{project_id}/locations/global/collections/default_collection/dataStores/viral-knowledge-base"
+        )
+    )
+
+    response = client.models.generate_content(
+        model=MODEL_LLM, 
+        contents=prompt,
+        config=GenerateContentConfig(
+            tools=[search_tool]
+        )
+    )
     
     # Parse JSON from response
     text = response.text.strip()
