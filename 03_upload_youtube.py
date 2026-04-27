@@ -100,10 +100,27 @@ def get_authenticated_service():
                 log.info("--- CLOUD SHELL AUTHENTICATION ---")
                 log.info(f"1. Open this URL: {auth_url}")
                 log.info("2. Authorize the app.")
-                log.info("3. You will get a 'Site can't be reached' error on localhost:8080.")
-                log.info("4. Copy the ENTIRE URL from your browser bar and paste it below.")
+                log.info("3. Copy the ENTIRE URL from your browser bar.")
+                log.info("4. EITHER paste it below OR (if pasting fails) run this in a NEW terminal:")
+                log.info(f"   echo 'PASTE_URL_HERE' > {PIPELINE_DIR}/auth.txt")
                 
-                response_url = input("\nPaste the full redirect URL here: ").strip()
+                # Check for auth.txt fallback
+                auth_txt = PIPELINE_DIR / "auth.txt"
+                if auth_txt.exists():
+                    log.info(f"Found {auth_txt}, reading URL...")
+                    response_url = auth_txt.read_text().strip()
+                    auth_txt.unlink() # Delete after use
+                else:
+                    time.sleep(1) # Ensure logs are flushed
+                    response_url = input("\nPaste the full redirect URL here (or leave empty to check auth.txt): ").strip()
+                    if not response_url and auth_txt.exists():
+                         response_url = auth_txt.read_text().strip()
+                         auth_txt.unlink()
+
+                if not response_url:
+                    log.error("No URL provided. Exiting.")
+                    sys.exit(1)
+
                 flow.fetch_token(authorization_response=response_url)
                 creds = flow.credentials
             else:
