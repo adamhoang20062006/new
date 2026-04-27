@@ -3,7 +3,7 @@
 # INSTALL_CLOUDSHELL.sh — ONE-CLICK GCP CLOUD SHELL INSTALLER
 # Run this in Google Cloud Shell (https://shell.cloud.google.com/):
 #
-#   curl -sL https://raw.githubusercontent.com/adamhoang20062006/yt-pipeline/main/INSTALL_CLOUDSHELL.sh | bash
+#   curl -sL https://raw.githubusercontent.com/adamhoang20062006/new/main/INSTALL_CLOUDSHELL.sh | bash
 #
 # =============================================================================
 # What this does:
@@ -16,7 +16,7 @@
 set -euo pipefail
 
 PIPELINE_DIR="$HOME/yt-pipeline"
-REPO_URL="https://github.com/adamhoang20062006/yt-pipeline"
+REPO_URL="https://github.com/adamhoang20062006/new"
 
 echo ""
 echo "╔══════════════════════════════════════════════════╗"
