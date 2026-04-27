@@ -9,6 +9,7 @@ import time
 import json
 import random
 import argparse
+import concurrent.futures
 from pathlib import Path
 from typing import List
 
@@ -148,62 +149,75 @@ def build_prompt(style, scene, prev_scene, shot_type):
     return f"{style}. {shot_type}. {scene}. {continuity} {CHARACTER_LOCK}. {ENVIRONMENT_LOCK}. {quality_boosters}".strip()
 
 # ── VIDEO GENERATION ──────────────────────────────────────────────────────────
-def generate_video(client, style, scenes, batch_id):
-    paths = []
-    prev = None
-    print(f"🎬 Generating {len(scenes)} video segments...")
-    
-    for i, scene in enumerate(scenes):
-        shot = SHOT_TYPES[i % len(SHOT_TYPES)]
-        prompt = build_prompt(style, scene, prev, shot)
-        out = OUTPUT_DIR / f"batch_{batch_id}_seg_{i}.mp4"
+def generate_single_scene(client, style, scenes, i, batch_id):
+    scene = scenes[i]
+    prev_scene = scenes[i-1] if i > 0 else None
+    shot_type = SHOT_TYPES[i % len(SHOT_TYPES)]
+    prompt = build_prompt(style, scene, prev_scene, shot_type)
+    out = OUTPUT_DIR / f"batch_{batch_id}_seg_{i}.mp4"
 
+    print(f"  🎬 Starting Scene {i+1} (Parallel Mode)...")
+    try:
+        operation = client.models.generate_videos(
+            model=MODEL_VIDEO,
+            prompt=prompt,
+            config=GenerateVideosConfig(number_of_videos=1, duration_seconds=5, aspect_ratio="16:9"),
+        )
+        while not operation.done:
+            time.sleep(10)
+            operation = client.operations.get(operation)
+
+        if operation.response and operation.response.generated_videos:
+            video = operation.response.generated_videos[0].video
+            with open(out, "wb") as f:
+                f.write(video.video_bytes)
+            print(f"    ✓ Scene {i+1} saved!")
+            return out
+        else:
+            raise ValueError("No video returned.")
+    except Exception as e:
+        print(f"    ❌ Scene {i+1} exception: {e}")
+        print(f"    🔄 Retrying Scene {i+1} with SAFE FALLBACK...")
+        safe_prompt = f"{style}. {shot_type}. A sweeping cinematic shot of a futuristic landscape, highly detailed, 8k. {CHARACTER_LOCK}. {ENVIRONMENT_LOCK}."
         try:
-            print(f"  ⏳ Scene {i+1} (Veo 3.1)...")
             operation = client.models.generate_videos(
                 model=MODEL_VIDEO,
-                prompt=prompt,
-                config=GenerateVideosConfig(number_of_videos=1, duration_seconds=8, aspect_ratio="16:9"),
+                prompt=safe_prompt,
+                config=GenerateVideosConfig(number_of_videos=1, duration_seconds=5, aspect_ratio="16:9"),
             )
             while not operation.done:
-                time.sleep(15)
+                time.sleep(10)
                 operation = client.operations.get(operation)
-
+            
             if operation.response and operation.response.generated_videos:
                 video = operation.response.generated_videos[0].video
                 with open(out, "wb") as f:
                     f.write(video.video_bytes)
-                paths.append(out)
-                print(f"    ✓ Saved {out.name}")
-            else:
-                raise ValueError("No video returned.")
-            prev = scene
-        except Exception as e:
-            print(f"    ❌ Scene {i+1} exception: {e}")
-            print(f"    🔄 Retrying Scene {i+1} with a SAFE FALLBACK prompt...")
-            safe_prompt = f"{style}. {shot_type}. A sweeping cinematic shot of a futuristic landscape, highly detailed, 8k. {CHARACTER_LOCK}. {ENVIRONMENT_LOCK}."
-            try:
-                operation = client.models.generate_videos(
-                    model=MODEL_VIDEO,
-                    prompt=safe_prompt,
-                    config=GenerateVideosConfig(number_of_videos=1, duration_seconds=8, aspect_ratio="16:9"),
-                )
-                while not operation.done:
-                    time.sleep(15)
-                    operation = client.operations.get(operation)
-                
-                if operation.response and operation.response.generated_videos:
-                    video = operation.response.generated_videos[0].video
-                    with open(out, "wb") as f:
-                        f.write(video.video_bytes)
-                    paths.append(out)
-                    print(f"    ✓ Saved {out.name} (Fallback)")
-                else:
-                    print(f"    ❌ Fallback also failed.")
-            except Exception as fallback_e:
-                print(f"    ❌ Fallback exception: {fallback_e}")
+                print(f"    ✓ Scene {i+1} saved (Fallback)!")
+                return out
+        except Exception:
+            pass
+    return None
 
-    return paths
+def generate_video(client, style, scenes, batch_id):
+    print(f"🚀 Launching {len(scenes)} scenes to Veo simultaneously...")
+    paths = [None] * len(scenes)
+    
+    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+        futures = {
+            executor.submit(generate_single_scene, client, style, scenes, i, batch_id): i 
+            for i in range(len(scenes))
+        }
+        
+        for future in concurrent.futures.as_completed(futures):
+            i = futures[future]
+            try:
+                paths[i] = future.result()
+            except Exception as e:
+                print(f"❌ Thread {i} failed: {e}")
+                
+    # Filter out any Nones if a clip permanently failed
+    return [p for p in paths if p is not None]
 
 # ── 2. VOICE + SYNC (FIXED) ───────────────────────────────────────────────────
 def generate_voice_segments(scenes, batch_id):
