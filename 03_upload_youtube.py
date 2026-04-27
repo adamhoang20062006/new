@@ -90,13 +90,19 @@ def get_authenticated_service():
             log.info("Refreshing access token...")
             creds.refresh(Request())
         else:
-            log.info("Opening browser for YouTube authorisation...")
             flow = InstalledAppFlow.from_client_secrets_file(str(SECRETS_FILE), SCOPES)
-            # In Cloud Shell: use --noauth_local_webserver equivalent
-            try:
+            
+            # Special handling for Google Cloud Shell
+            if os.environ.get('DEVSHELL_PROJECT_ID'):
+                log.info("Detected Cloud Shell environment.")
+                log.info("1. Click the link below to authorize.")
+                log.info("2. After authorizing, you will see a 'Site can't be reached' error on localhost.")
+                log.info("3. Copy the ENTIRE URL from your browser's address bar (the one starting with http://localhost...)")
+                log.info("4. Paste that URL here:")
+                creds = flow.run_local_server(host='localhost', port=8080, open_browser=False)
+            else:
+                log.info("Opening browser for YouTube authorisation...")
                 creds = flow.run_local_server(port=0)
-            except Exception:
-                creds = flow.run_console()
 
         # Save token for next run
         with open(TOKEN_FILE, "w") as f:
