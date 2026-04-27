@@ -23,24 +23,48 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 def ai_director(vision, project_id, location):
     """Uses Gemini to generate a storyboard and style based on a vision."""
-    print(f"🤖 AI Director is planning: \"{vision}\"...")
+    print(f"🤖 AI Director (War Simulation Elite) is planning: \"{vision}\"...")
     
     vertexai.init(project=project_id, location=location)
     model = GenerativeModel("gemini-1.5-flash")
     
     prompt = f"""
-    You are a professional film director. 
-    Based on the vision "{vision}", create:
-    1. A style prefix (3-5 words describing the overall look, lighting, and camera style).
-    2. A storyboard of 4 distinct cinematic scenes (one descriptive sentence per scene).
-    
-    Format your response EXACTLY like this:
-    STYLE: [your style]
-    SCENE 1: [description]
-    SCENE 2: [description]
-    SCENE 3: [description]
-    SCENE 4: [description]
-    """
+You are an elite film director specializing in cinematic war simulations.
+
+Your job is to transform the idea below into a visually stunning, emotionally intense 4-scene storyboard optimized for AI video generation (Veo).
+
+VISION:
+"{vision}"
+
+DIRECTING RULES:
+- Every scene must feel like a moment from a high-budget film
+- Use specific visual language: camera angle, movement, lighting, environment
+- Include human elements (soldiers, civilians, command rooms, pilots, etc.)
+- Maintain strong continuity (each scene progresses in time)
+- Focus on clarity + intensity, not abstract descriptions
+- Avoid generic phrases
+
+OUTPUT FORMAT (STRICT):
+
+STYLE: [3–6 words describing cinematic style, lighting, realism, tone]
+
+SCENE 1 (Hour 0 - First Impact):
+[A single sentence describing the opening moment, including camera shot, environment, action, and mood]
+
+SCENE 2 (Escalation):
+[A single sentence showing reaction and rising tension, different location or perspective, cinematic detail]
+
+SCENE 3 (Turning Point):
+[A single sentence showing a critical decision, battle shift, or high-intensity moment]
+
+SCENE 4 (Aftermath / Consequence):
+[A single sentence showing large-scale impact, emotional weight, or global consequence]
+
+IMPORTANT:
+- Each scene must be ONE sentence only
+- Each sentence must be highly visual and concrete
+- Do NOT explain — only describe what is seen on screen
+"""
     
     response = model.generate_content(prompt)
     lines = response.text.strip().split('\n')
@@ -49,12 +73,20 @@ def ai_director(vision, project_id, location):
     scenes = []
     
     for line in lines:
+        line = line.strip()
         if line.startswith("STYLE:"):
             style = line.replace("STYLE:", "").strip()
-        elif "SCENE" in line and ":" in line:
-            scenes.append(line.split(":", 1)[1].strip())
+        elif line.startswith("SCENE") and ":" in line:
+            # Handle "SCENE 1 (Description): Actual Content"
+            content = line.split(":", 1)[1].strip()
+            if not content: continue # Skip if content is on next line
+            scenes.append(content)
+        elif scenes and line and not line.startswith("SCENE"):
+            # If content was on the next line after SCENE X:
+            if not scenes[-1]:
+                scenes[-1] = line
             
-    return style, scenes
+    return style, [s for s in scenes if s]
 
 def generate_and_stitch(vision, project_id, location):
     # 1. AI Planning
