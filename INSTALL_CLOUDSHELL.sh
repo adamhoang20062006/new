@@ -74,9 +74,14 @@ if [ -n "$SCRIPT_DIR" ] && [ -f "$SCRIPT_DIR/00_bootstrap.sh" ]; then
 else
   # Case B: no local scripts → try git clone
   echo "   No local scripts found; cloning from repo..."
-  if [ -d "$PIPELINE_DIR/.git" ] || [ -f "$PIPELINE_DIR/00_bootstrap.sh" ]; then
+  if [ -d "$PIPELINE_DIR/.git" ]; then
     echo "   ✓ Existing checkout found in $PIPELINE_DIR"
   else
+    if [ -d "$PIPELINE_DIR" ]; then
+      echo "   ⚠ Removing incomplete/empty directory at $PIPELINE_DIR..."
+      rm -rf "$PIPELINE_DIR"
+    fi
+
     if echo "$REPO_URL" | grep -q 'YOUR_USERNAME'; then
       echo "❌ REPO_URL is still the placeholder."
       echo "   Update REPO_URL in INSTALL_CLOUDSHELL.sh to your real GitHub repo URL."
