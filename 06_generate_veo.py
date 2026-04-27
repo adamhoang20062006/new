@@ -17,6 +17,7 @@ PIPELINE_DIR = Path.home() / "yt-pipeline"
 INPUT_DIR    = PIPELINE_DIR / "input"
 OUTPUT_DIR   = PIPELINE_DIR / "output"
 STORYBOARD   = PIPELINE_DIR / "storyboard.txt"
+STYLE_FILE   = PIPELINE_DIR / "style_prefix.txt"
 
 # Create directories
 for d in [INPUT_DIR, OUTPUT_DIR]:
@@ -26,26 +27,31 @@ def generate_segments(prompts, project_id, location="us-central1", fast_mode=Tru
     vertexai.init(project=project_id, location=location)
     model = VideoGenerationModel.from_pretrained("veo-001")
     
+    # Load Style Prefix for consistency
+    style_prefix = ""
+    if STYLE_FILE.exists():
+        style_prefix = STYLE_FILE.read_text().strip()
+        print(f"🎨 Applying Style Prefix: \"{style_prefix}\"")
+
     segment_paths = []
+    fixed_seed = 42 # Using a fixed seed for consistency across segments
     
-    print(f"\n🎬 [FAST MODE] Starting Veo generation for {len(prompts)} segments...")
+    print(f"\n🎬 [CONSISTENCY MODE] Generating {len(prompts)} segments...")
     
     for i, prompt in enumerate(prompts):
         if not prompt.strip(): continue
         
+        full_prompt = f"{style_prefix} {prompt}".strip()
         filename = f"segment_{i:03d}.mp4"
         filepath = OUTPUT_DIR / filename
         
-        print(f"  [{i+1}/{len(prompts)}] Generating: \"{prompt[:50]}...\"")
+        print(f"  [{i+1}/{len(prompts)}] Generating: \"{full_prompt[:60]}...\"")
         
         try:
-            # Optimized for speed: 5 seconds, 24 fps
             video = model.generate_video(
-                prompt=prompt,
+                prompt=full_prompt,
                 aspect_ratio="16:9",
-                # Note: Some regions/versions support duration and fps parameters
-                # duration=5 if fast_mode else 10,
-                # fps=24 if fast_mode else 30
+                seed=fixed_seed # Shared seed keeps lighting/style consistent
             )
             video.save(str(filepath))
             print(f"    ✓ Saved to {filename}")
