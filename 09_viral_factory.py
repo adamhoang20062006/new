@@ -176,10 +176,32 @@ def generate_video(client, style, scenes, batch_id):
                 paths.append(out)
                 print(f"    ✓ Saved {out.name}")
             else:
-                print(f"    ❌ Scene {i+1} failed.")
+                raise ValueError("No video returned.")
             prev = scene
         except Exception as e:
             print(f"    ❌ Scene {i+1} exception: {e}")
+            print(f"    🔄 Retrying Scene {i+1} with a SAFE FALLBACK prompt...")
+            safe_prompt = f"{style}. {shot_type}. A sweeping cinematic shot of a futuristic landscape, highly detailed, 8k. {CHARACTER_LOCK}. {ENVIRONMENT_LOCK}."
+            try:
+                operation = client.models.generate_videos(
+                    model=MODEL_VIDEO,
+                    prompt=safe_prompt,
+                    config=GenerateVideosConfig(number_of_videos=1, duration_seconds=8, aspect_ratio="16:9"),
+                )
+                while not operation.done:
+                    time.sleep(15)
+                    operation = client.operations.get(operation)
+                
+                if operation.response and operation.response.generated_videos:
+                    video = operation.response.generated_videos[0].video
+                    with open(out, "wb") as f:
+                        f.write(video.video_bytes)
+                    paths.append(out)
+                    print(f"    ✓ Saved {out.name} (Fallback)")
+                else:
+                    print(f"    ❌ Fallback also failed.")
+            except Exception as fallback_e:
+                print(f"    ❌ Fallback exception: {fallback_e}")
 
     return paths
 
