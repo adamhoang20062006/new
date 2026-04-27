@@ -26,7 +26,8 @@ OUTPUT_DIR = PIPELINE_DIR / "output"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 MODEL_TEXT = "gemini-2.5-flash"
-MODEL_VIDEO = "veo-3.1"
+MODEL_VIDEO = "veo-2.0-generate-001"
+# Other options: "veo-3.0-fast-generate-001", "veo-3.0-generate-001", "veo-3.1-generate-001"
 
 # ── GLOBAL LOCKS (For extreme consistency) ────────────────────────────────────
 CHARACTER_LOCK = "same male soldier, mid-30s, short hair, tactical uniform, consistent face"
