@@ -37,17 +37,17 @@ SHOT_TYPES = ["handheld", "drone shot", "tracking shot", "close up"]
 # ── 3. TOPIC ENGINE ───────────────────────────────────────────────────────────
 def generate_topics():
     base = [
-        "What happens if World War 3 starts tomorrow",
-        "What happens if AI controls the battlefield",
-        "What happens if China invades Taiwan",
-        "What happens during a nuclear retaliation",
-        "What happens if drones replace soldiers",
+        "What happens if an alien mothership attacks Earth",
+        "What happens if AI controls a futuristic robot army",
+        "What happens if a rogue AI launches an orbital strike",
+        "What happens during a cyberpunk city uprising",
+        "What happens if mechs replace soldiers",
     ]
     modifiers = [
-        "in 2026",
+        "in 2077",
         "in the next 24 hours",
-        "from inside the battlefield",
-        "from a soldier’s perspective",
+        "from inside the futuristic battlefield",
+        "from a cyborg soldier’s perspective",
     ]
     topics = []
     for b in base:
