@@ -27,7 +27,7 @@ OUTPUT_DIR = PIPELINE_DIR / "output"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 MODEL_TEXT = "gemini-2.5-flash"
-MODEL_VIDEO = "veo-2.0-generate-001" # "veo-3.1" when available
+MODEL_VIDEO = "veo-3.1-fast-generate-001" # Veo 3.1 Fast as requested
 
 # ── GLOBAL LOCKS ──────────────────────────────────────────────────────────────
 CHARACTER_LOCK = "same male soldier, mid-30s, short hair, tactical uniform, consistent face"
@@ -140,8 +140,11 @@ def pick_best(variations):
     return winner[1], winner[2]
 
 def build_prompt(style, scene, prev_scene, shot_type):
-    continuity = f"Follow action from: {prev_scene[:80]}." if prev_scene else ""
-    return f"{style}, cinematic realism, 8k. {CHARACTER_LOCK}. {ENVIRONMENT_LOCK}. {shot_type}. {continuity} {scene}".strip()
+    continuity = f"Continuous action from: {prev_scene[:80]}." if prev_scene else ""
+    quality_boosters = "masterpiece, ultra-detailed, photorealistic, cinematic volumetric lighting, intense color grading, 8k resolution, award-winning cinematography"
+    
+    # Restructured for Veo: Style -> Shot -> Action -> Continuity -> Locks -> Quality
+    return f"{style}. {shot_type}. {scene}. {continuity} {CHARACTER_LOCK}. {ENVIRONMENT_LOCK}. {quality_boosters}".strip()
 
 # ── VIDEO GENERATION ──────────────────────────────────────────────────────────
 def generate_video(client, style, scenes, batch_id):
