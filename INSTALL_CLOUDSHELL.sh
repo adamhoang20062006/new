@@ -46,15 +46,9 @@ echo "[1/4] Enabling required GCP APIs..."
 gcloud services enable youtube.googleapis.com --quiet 2>/dev/null || true
 echo "✓ YouTube Data API v3 enabled"
 
-# ── Step 4: Create directory structure ────────────────────────────────────────
+# ── Step 4: Obtain / set up scripts ───────────────────────────────────────────
 echo ""
-echo "[2/4] Creating pipeline directory structure..."
-mkdir -p "$PIPELINE_DIR"/{input,output,thumbnails,subtitles,logs,final,scripts}
-echo "✓ Directories created at $PIPELINE_DIR"
-
-# ── Step 5: Obtain / set up scripts ───────────────────────────────────────────
-echo ""
-echo "[3/4] Setting up scripts..."
+echo "[2/4] Setting up scripts..."
 
 # Determine where the installer lives (empty when piped via curl | bash)
 if [ -n "${BASH_SOURCE[0]:-}" ] && [ "${BASH_SOURCE[0]}" != "bash" ]; then
@@ -66,6 +60,7 @@ fi
 # Case A: scripts are available next to this installer (archive extracted)
 if [ -n "$SCRIPT_DIR" ] && [ -f "$SCRIPT_DIR/00_bootstrap.sh" ]; then
   echo "   Detected local scripts next to installer, copying into $PIPELINE_DIR..."
+  mkdir -p "$PIPELINE_DIR"
   for SCRIPT in 00_bootstrap.sh 01_process_videos.sh 02_transcribe.sh \
                 03_upload_youtube.py 04_burn_subtitles.sh 05_watch_and_process.sh; do
     if [ -f "$SCRIPT_DIR/$SCRIPT" ]; then
@@ -101,6 +96,13 @@ else
     fi
   done
 fi
+
+# ── Step 5: Create directory structure ────────────────────────────────────────
+echo ""
+echo "[3/4] Creating pipeline directory structure..."
+mkdir -p "$PIPELINE_DIR"/{input,output,thumbnails,subtitles,logs,final,scripts}
+echo "✓ Directories created at $PIPELINE_DIR"
+
 
 # ── Step 6: Run bootstrap ─────────────────────────────────────────────────────
 echo ""
