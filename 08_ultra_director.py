@@ -8,12 +8,22 @@ from typing import List, Tuple
 
 try:
     import vertexai
-    from vertexai.preview.vision_models import VideoGenerationModel
     from vertexai.generative_models import GenerativeModel
     from gtts import gTTS
-except ImportError as e:
+    
+    # Try multiple locations for VideoGenerationModel (Google moves this in previews)
+    try:
+        from vertexai.preview.vision_models import VideoGenerationModel
+    except ImportError:
+        try:
+            from vertexai.vision_models import VideoGenerationModel
+        except ImportError:
+            # Fallback for some specific versions
+            from vertexai.preview.generative_models import VideoGenerationModel
+            
+except Exception as e:
     print(f"❌ Dependency Error: {e}")
-    print("Please run: ~/yt-pipeline/venv/bin/pip install google-cloud-aiplatform gTTS")
+    print("Please run: ~/yt-pipeline/venv/bin/pip install --upgrade google-cloud-aiplatform gTTS")
     sys.exit(1)
 
 # ── Config ─────────────────────────────────────────────────────────────────────
