@@ -161,11 +161,14 @@ def generate_single_scene(client, style, scenes, i, batch_id):
         operation = client.models.generate_videos(
             model=MODEL_VIDEO,
             prompt=prompt,
-            config=GenerateVideosConfig(number_of_videos=1, duration_seconds=5, aspect_ratio="16:9"),
+            config=GenerateVideosConfig(number_of_videos=1, duration_seconds=8, aspect_ratio="16:9"),
         )
         while not operation.done:
             time.sleep(10)
             operation = client.operations.get(operation)
+        
+        if getattr(operation, 'error', None):
+            raise ValueError(f"API Error: {operation.error.message}")
 
         if operation.response and operation.response.generated_videos:
             video = operation.response.generated_videos[0].video
@@ -174,7 +177,7 @@ def generate_single_scene(client, style, scenes, i, batch_id):
             print(f"    ✓ Scene {i+1} saved!")
             return out
         else:
-            raise ValueError("No video returned.")
+            raise ValueError(f"No video returned. Response: {operation.response}")
     except Exception as e:
         print(f"    ❌ Scene {i+1} exception: {e}")
         print(f"    🔄 Retrying Scene {i+1} with SAFE FALLBACK...")
@@ -183,27 +186,33 @@ def generate_single_scene(client, style, scenes, i, batch_id):
             operation = client.models.generate_videos(
                 model=MODEL_VIDEO,
                 prompt=safe_prompt,
-                config=GenerateVideosConfig(number_of_videos=1, duration_seconds=5, aspect_ratio="16:9"),
+                config=GenerateVideosConfig(number_of_videos=1, duration_seconds=8, aspect_ratio="16:9"),
             )
             while not operation.done:
                 time.sleep(10)
                 operation = client.operations.get(operation)
             
+            if getattr(operation, 'error', None):
+                raise ValueError(f"Fallback API Error: {operation.error.message}")
+
             if operation.response and operation.response.generated_videos:
                 video = operation.response.generated_videos[0].video
                 with open(out, "wb") as f:
                     f.write(video.video_bytes)
                 print(f"    ✓ Scene {i+1} saved (Fallback)!")
                 return out
-        except Exception:
-            pass
+            else:
+                print(f"    ❌ Fallback empty response.")
+        except Exception as fallback_e:
+            print(f"    ❌ Fallback exception: {fallback_e}")
     return None
 
 def generate_video(client, style, scenes, batch_id):
     print(f"🚀 Launching {len(scenes)} scenes to Veo simultaneously...")
     paths = [None] * len(scenes)
     
-    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+    # Lowered workers to 2 to prevent rate limiting
+    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
         futures = {
             executor.submit(generate_single_scene, client, style, scenes, i, batch_id): i 
             for i in range(len(scenes))
