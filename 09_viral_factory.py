@@ -101,9 +101,10 @@ TOPIC: "{topic}"
 
 DIRECTING RULES:
 {RETENTION_RULES}
-- Include human elements.
+- Include human/cyborg elements.
 - Maintain strong continuity.
 - Focus on clarity + intensity, not abstract descriptions.
+- CRITICAL VEO SAFETY: Keep action PG-13. Do NOT use words like blood, gore, kill, murder, death, dismemberment, or terror. Use "plasma fire", "explosions", "evading", "impact" instead.
 
 OUTPUT FORMAT (STRICT):
 STYLE: [3-6 words describing cinematic style, lighting, realism, tone]
