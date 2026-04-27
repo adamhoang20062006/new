@@ -25,7 +25,7 @@ PIPELINE_DIR = Path.home() / "yt-pipeline"
 OUTPUT_DIR = PIPELINE_DIR / "output"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-MODEL_TEXT = "gemini-2.0-flash"
+MODEL_TEXT = "gemini-1.5-flash-001"
 MODEL_VIDEO = "veo-3.1"
 
 # ── GLOBAL LOCKS (For extreme consistency) ────────────────────────────────────
