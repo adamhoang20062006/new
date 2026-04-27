@@ -11,8 +11,9 @@ try:
     from vertexai.preview.vision_models import VideoGenerationModel
     from vertexai.generative_models import GenerativeModel
     from gtts import gTTS
-except ImportError:
-    print("❌ Missing dependencies. Run: pip install google-cloud-aiplatform gTTS")
+except ImportError as e:
+    print(f"❌ Dependency Error: {e}")
+    print("Please run: ~/yt-pipeline/venv/bin/pip install google-cloud-aiplatform gTTS")
     sys.exit(1)
 
 # ── Config ─────────────────────────────────────────────────────────────────────
