@@ -318,7 +318,7 @@ from pathlib import Path
 try:
     from google import genai
     from google.genai.types import GenerateVideosConfig
-    from gtts import gTTS
+    from google.cloud import texttospeech
 except ImportError as e:
     print(f"Missing dependency: {{e}}")
     sys.exit(1)
@@ -399,17 +399,34 @@ def generate_scene(client, i):
             pass
     return None
 
-# ── Voice Generation (Per-Scene) ──────────────────────────────────────────────
+# ── Voice Generation (Vertex AI Studio Voices) ───────────────────────────────
 def generate_voices():
-    print("🔊 Generating per-scene narration...")
+    print("🔊 Generating ELITE AI narration (Studio-Q)...")
+    client = texttospeech.TextToSpeechClient()
     paths = []
     all_narrations = [HOOK_LINE] + NARRATIONS + [CTA_LINE]
+    
     for i, text in enumerate(all_narrations):
-        if not text:
-            continue
-        tts = gTTS(text=text[:150], lang="en", slow=False)
+        if not text: continue
+        
+        synthesis_input = texttospeech.SynthesisInput(text=text)
+        voice = texttospeech.VoiceSelectionParams(
+            language_code="en-US",
+            name="en-US-Studio-Q"  # The deep, cinematic male voice
+        )
+        audio_config = texttospeech.AudioConfig(
+            audio_encoding=texttospeech.AudioEncoding.MP3,
+            pitch=0.0,
+            speaking_rate=0.95  # Slightly slower for more tension
+        )
+
+        response = client.synthesize_speech(
+            input=synthesis_input, voice=voice, audio_config=audio_config
+        )
+
         p = OUTPUT_DIR / f"voice_{{i:03d}}.mp3"
-        tts.save(str(p))
+        with open(p, "wb") as out:
+            out.write(response.audio_content)
         paths.append(p)
     return paths
 
