@@ -390,8 +390,8 @@ def generate_scene(client, i):
                     f.write(video.video_bytes)
                 print(f"    ✓ Scene {{i+1}} saved (fallback)!")
                 return out
-        except Exception:
-            pass
+        except Exception as fallback_e:
+            print(f"    ❌ Fallback failed: {fallback_e}")
     return None
 
 # ── Voice Generation (Vertex AI Studio Voices) ───────────────────────────────

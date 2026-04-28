@@ -8,7 +8,7 @@
   "format": "long",
   "character_lock": "lone samurai, metallic cybernetic mask, glowing blue katana, wet black tactical cloak, neon reflections on armor",
   "environment_lock": "narrow underground alleyway, massive neon signs in Japanese, heavy torrential rain, steam rising from grates",
-  "veo_model": "veo-3.1-fast-generate-001",
+  "veo_model": "veo-2.0-generate-001",
   "voice_dna": {
     "identity": "A documentary voice from the future that knows too much but is emotionally unstable",
     "base_tone": "calm, controlled, observant",
