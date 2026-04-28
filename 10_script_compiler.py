@@ -236,7 +236,7 @@ Return ONLY valid JSON, no markdown, no explanation:
     
     tools = [{
         "vertex_ai_search": {
-            "datastore": datastore_path
+            "data_store": datastore_path  # Changed from 'datastore' to 'data_store'
         }
     }]
 
