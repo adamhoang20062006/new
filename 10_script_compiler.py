@@ -230,19 +230,21 @@ Return ONLY valid JSON, no markdown, no explanation:
 
     print(f"🧠 Compiling story blueprint (Grounded Episode {ep_num})...")
     
-    # Configure Grounding with your Data Store
+    # Configure Grounding with your Data Store (Using dictionary to avoid Pydantic errors)
     project_id = os.environ.get("DEVSHELL_PROJECT_ID")
-    search_tool = Tool(
-        vertex_ai_search=VertexAISearch(
-            datastore=f"projects/{project_id}/locations/global/collections/default_collection/dataStores/viral-knowledge-base"
-        )
-    )
+    datastore_path = f"projects/{project_id}/locations/global/collections/default_collection/dataStores/viral-knowledge-base"
+    
+    tools = [{
+        "vertex_ai_search": {
+            "datastore": datastore_path
+        }
+    }]
 
     response = client.models.generate_content(
         model=MODEL_LLM, 
         contents=prompt,
         config=GenerateContentConfig(
-            tools=[search_tool]
+            tools=tools
         )
     )
     
